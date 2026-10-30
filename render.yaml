@@ -1,0 +1,13 @@
+# Render.com 用の設定（Blueprint）。GitHubにこのフォルダをアップロードして連携すると自動でデプロイされます。
+services:
+  - type: web
+    name: folio
+    runtime: node
+    plan: free
+    buildCommand: "echo no build"
+    startCommand: node server.js
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false   # デプロイ時に画面で入力（コードには書かない）
+      - key: APP_PASSCODE
+        sync: false   # 任意。公開時の悪用防止におすすめ

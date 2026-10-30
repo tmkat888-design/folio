@@ -1,0 +1,886 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Folio">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<title>Folio — 撮るだけで、まとまる。</title>
+<style>
+:root{
+  --navy:#16264a; --navy2:#2a3f6e; --blue:#4a7bd8; --sky:#e8f0fd; --sky2:#f4f8ff;
+  --line:#e2e9f5; --text:#1c2740; --muted:#6b7a99; --warn:#b4540a; --warnbg:#fff4e5;
+  --danger:#c0392b; --ok:#1f8a5b; --r:18px;
+  --sat:env(safe-area-inset-top,0px); --sab:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:#fff;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP","Yu Gothic",system-ui,sans-serif;line-height:1.7;font-size:16px}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.screen{display:none;min-height:100dvh;padding:calc(var(--sat) + 16px) 20px calc(var(--sab) + 28px);max-width:640px;margin:0 auto}
+.screen.on{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.top{display:flex;align-items:center;gap:8px;margin:0 -8px 12px}
+.top h2{font-size:18px;margin:0;flex:1;color:var(--navy);letter-spacing:.02em}
+.ib{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:var(--navy)}
+.ib:active{background:var(--sky)}
+.ib svg{width:22px;height:22px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:54px;border-radius:16px;font-weight:700;font-size:16px;padding:0 20px;transition:transform .1s}
+.btn:active{transform:scale(.98)}
+.btn.primary{background:var(--navy);color:#fff;box-shadow:0 8px 22px rgba(22,38,74,.22)}
+.btn.soft{background:var(--sky);color:var(--navy)}
+.btn.ghost{border:1.5px solid var(--line);color:var(--navy);background:#fff}
+.btn[disabled]{opacity:.4;pointer-events:none}
+.btn.sm{min-height:44px;font-size:14px;border-radius:12px}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.muted{color:var(--muted);font-size:14px}
+.card{border:1.5px solid var(--line);border-radius:var(--r);padding:16px;background:#fff}
+.banner{border-radius:14px;padding:12px 14px;font-size:14px;margin:12px 0;background:var(--warnbg);color:var(--warn)}
+.banner.info{background:var(--sky);color:var(--navy2)}
+/* home */
+.hero{padding:34px 4px 18px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px;color:var(--navy);letter-spacing:.04em}
+.logo i{width:38px;height:38px;border-radius:12px;background:linear-gradient(145deg,var(--navy),var(--blue));display:grid;place-items:center}
+.logo i svg{width:22px;height:22px}
+.hero h1{font-size:30px;line-height:1.35;margin:26px 0 10px;color:var(--navy);letter-spacing:.01em}
+.hero h1 em{font-style:normal;background:linear-gradient(transparent 62%,#cfe0fb 62%)}
+.hero p{margin:0;color:var(--muted)}
+.steps{display:grid;gap:10px;margin:22px 0}
+.step{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:var(--sky2);border:1px solid var(--line)}
+.step b{width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:13px;flex:none;margin-top:2px}
+.step div{font-size:14px}.step strong{display:block;font-size:15px;color:var(--navy)}
+.stack{display:grid;gap:12px}
+/* camera */
+#s-camera{background:var(--navy);max-width:none;padding:0;color:#fff}
+#s-camera.on{display:flex;flex-direction:column}
+.cam-top{display:flex;align-items:center;padding:calc(var(--sat) + 8px) 12px 8px}
+.cam-top .ib{color:#fff}.cam-top .ib:active{background:rgba(255,255,255,.12)}
+.cam-top .cnt{flex:1;text-align:center;font-weight:700}
+.viewfinder{position:relative;flex:1;min-height:0;background:#0b1530;overflow:hidden;display:grid;place-items:center}
+.viewfinder video{width:100%;height:100%;object-fit:cover}
+.guide{position:absolute;inset:8% 9%;border:2px solid rgba(255,255,255,.55);border-radius:14px;pointer-events:none;box-shadow:0 0 0 999px rgba(11,21,48,.35)}
+.guide::before,.guide::after{content:"";position:absolute;width:26px;height:26px;border:4px solid #fff}
+.guide::before{top:-2px;left:-2px;border-right:0;border-bottom:0;border-radius:14px 0 0 0}
+.guide::after{bottom:-2px;right:-2px;border-left:0;border-top:0;border-radius:0 0 14px 0}
+.tip{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:13px;color:rgba(255,255,255,.85)}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.flash.go{animation:fl .25s}
+@keyframes fl{0%{opacity:.85}100%{opacity:0}}
+.cam-bottom{display:flex;align-items:center;justify-content:space-between;padding:16px 24px calc(var(--sab) + 18px)}
+.shutter{width:76px;height:76px;border-radius:50%;border:4px solid #fff;display:grid;place-items:center}
+.shutter span{width:58px;height:58px;border-radius:50%;background:#fff;transition:transform .1s}
+.shutter:active span{transform:scale(.88)}
+.thumb{width:56px;height:56px;border-radius:12px;background:rgba(255,255,255,.12) center/cover;border:2px solid rgba(255,255,255,.4)}
+.doneb{min-width:84px;height:48px;border-radius:14px;background:#fff;color:var(--navy);font-weight:800;padding:0 16px}
+.doneb[disabled]{opacity:.35}
+.camfail{padding:30px 24px;text-align:center;display:none}
+.camfail .btn{margin-top:14px}
+/* review */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+.pg{border:1.5px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.pg .im{aspect-ratio:3/4;background:var(--sky2) center/cover no-repeat;position:relative}
+.pg .no{position:absolute;top:8px;left:8px;background:var(--navy);color:#fff;border-radius:10px;padding:1px 10px;font-size:13px;font-weight:700}
+.pg .bl{position:absolute;bottom:8px;left:8px;right:8px;background:var(--warnbg);color:var(--warn);font-size:11px;line-height:1.4;padding:4px 8px;border-radius:8px}
+.pg .tools{display:flex}
+.pg .tools button{flex:1;height:44px;color:var(--navy);font-size:18px}
+.pg .tools button:active{background:var(--sky)}
+.pg .tools button[disabled]{opacity:.25}
+.pg .tools .del{color:var(--danger)}
+.sticky{position:sticky;bottom:0;margin:0 -20px;padding:12px 20px calc(var(--sab) + 12px);background:linear-gradient(transparent,#fff 28%)}
+.empty{text-align:center;padding:50px 10px;color:var(--muted)}
+/* settings */
+.h3{font-size:15px;font-weight:800;color:var(--navy);margin:24px 0 10px}
+.chips{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chip{padding:13px 12px;border:1.5px solid var(--line);border-radius:14px;text-align:left;font-size:14px;font-weight:600;line-height:1.4}
+.chip small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.chip.on{border-color:var(--navy);background:var(--sky);color:var(--navy)}
+.seg{display:flex;background:var(--sky);padding:4px;border-radius:14px}
+.seg button{flex:1;height:42px;border-radius:11px;font-weight:700;color:var(--muted)}
+.seg button.on{background:#fff;color:var(--navy);box-shadow:0 2px 8px rgba(22,38,74,.12)}
+.tg{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border:1.5px solid var(--line);border-radius:14px;margin-bottom:8px;font-weight:600;font-size:15px}
+.sw{width:50px;height:30px;border-radius:15px;background:#d3dbea;position:relative;transition:.2s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.sw.on{background:var(--navy)}.sw.on::after{left:23px}
+/* processing */
+.proc{text-align:center;padding-top:10vh}
+.scanner{width:140px;height:180px;margin:0 auto 28px;border-radius:16px;border:2px solid var(--navy);position:relative;overflow:hidden;background:var(--sky2)}
+.scanner i{position:absolute;left:18px;right:18px;height:6px;border-radius:3px;background:#c9d8f3}
+.scanner .l{position:absolute;left:0;right:0;height:3px;background:var(--blue);box-shadow:0 0 14px 4px rgba(74,123,216,.5);animation:sc 1.8s ease-in-out infinite}
+@keyframes sc{0%,100%{top:6%}50%{top:92%}}
+.bar{height:8px;border-radius:4px;background:var(--sky);overflow:hidden;margin:18px 0 6px}
+.bar div{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--navy));transition:width .4s}
+.stlist{text-align:left;margin:26px auto 0;max-width:320px;display:grid;gap:10px;font-size:15px}
+.stlist div{display:flex;gap:10px;align-items:center;color:var(--muted)}
+.stlist div.on{color:var(--navy);font-weight:700}.stlist div.done{color:var(--ok)}
+.dot{width:12px;height:12px;border-radius:50%;background:#d3dbea;flex:none}
+.on .dot{background:var(--blue);animation:pl 1s infinite}.done .dot{background:var(--ok)}
+@keyframes pl{50%{transform:scale(1.5);opacity:.5}}
+.errbox{text-align:left;border:1.5px solid #f2c9c4;background:#fff6f5;border-radius:16px;padding:16px;margin-top:24px;color:#8c2a1f;font-size:14px}
+.errbox b{display:block;font-size:16px;margin-bottom:4px}
+/* result */
+.titlein{width:100%;font:inherit;font-size:22px;font-weight:800;color:var(--navy);border:0;border-bottom:2px solid transparent;padding:4px 0;background:none;outline:none}
+.titlein:focus{border-color:var(--blue)}
+.acts{display:flex;gap:8px;overflow-x:auto;margin:10px -20px 6px;padding:2px 20px 8px;scrollbar-width:none}
+.acts::-webkit-scrollbar{display:none}
+.acts button{flex:none;height:42px;padding:0 16px;border-radius:21px;background:var(--sky);color:var(--navy);font-weight:700;font-size:14px;white-space:nowrap}
+.acts button.pr{background:var(--navy);color:#fff}
+details.sec{border:1.5px solid var(--line);border-radius:var(--r);margin:12px 0;background:#fff}
+details.sec>summary{list-style:none;padding:16px;font-weight:800;color:var(--navy);display:flex;align-items:center;gap:10px;cursor:pointer}
+details.sec>summary::-webkit-details-marker{display:none}
+details.sec>summary::after{content:"＋";margin-left:auto;color:var(--blue)}
+details.sec[open]>summary::after{content:"－"}
+details.sec .bd{padding:0 16px 16px}
+.n{width:26px;height:26px;border-radius:8px;background:var(--sky);display:grid;place-items:center;font-size:13px;color:var(--navy2)}
+.txt{white-space:pre-wrap;word-break:break-word}
+.item{padding:12px 0;border-top:1px solid var(--line)}.item:first-child{border-top:0;padding-top:0}
+.item h4{margin:0 0 4px;font-size:15px;color:var(--navy)}
+.cites{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cite{font-size:12px;padding:2px 10px;border-radius:10px;background:var(--sky);color:var(--navy2);font-weight:700}
+.ed{width:100%;font:inherit;font-size:15px;border:1.5px solid var(--blue);border-radius:12px;padding:10px;resize:vertical;background:var(--sky2);color:var(--text)}
+.tabs{display:flex;gap:6px;margin-bottom:12px}
+.tabs button{flex:1;height:40px;border-radius:12px;background:var(--sky);font-weight:700;color:var(--muted)}
+.tabs button.on{background:var(--navy);color:#fff}
+.warnbox{background:var(--warnbg);color:var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;margin-top:10px}
+pre.raw{white-space:pre-wrap;word-break:break-word;font:13px/1.6 ui-monospace,Menlo,monospace;background:var(--sky2);border-radius:12px;padding:12px;max-height:340px;overflow:auto;margin:0}
+/* library */
+.search{width:100%;height:48px;border-radius:14px;border:1.5px solid var(--line);padding:0 16px;font:inherit;outline:none;background:var(--sky2)}
+.search:focus{border-color:var(--blue);background:#fff}
+.li{display:flex;gap:6px;align-items:stretch;border:1.5px solid var(--line);border-radius:16px;margin:10px 0;overflow:hidden}
+.li .main{flex:1;text-align:left;padding:14px 16px;min-width:0}
+.li .main b{display:block;color:var(--navy);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.li .main span{font-size:13px;color:var(--muted)}
+.li .main p{margin:4px 0 0;font-size:13px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.li .x{width:52px;color:var(--danger)}
+.li .x:active{background:#fff0ee}
+/* modal */
+.mask{position:fixed;inset:0;background:rgba(11,21,48,.55);display:none;align-items:flex-end;justify-content:center;z-index:50}
+.mask.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:640px;border-radius:24px 24px 0 0;padding:22px 20px calc(var(--sab) + 22px);max-height:90dvh;overflow:auto;animation:up .25s ease}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.sheet h3{margin:0 0 14px;color:var(--navy)}
+.sheet input[type=text]{width:100%;height:50px;border:1.5px solid var(--line);border-radius:14px;padding:0 14px;font:inherit;outline:none}
+.sheet input[type=text]:focus{border-color:var(--blue)}
+.chk{display:flex;gap:10px;align-items:center;margin:14px 0;font-size:15px}
+.chk input{width:22px;height:22px;accent-color:var(--navy)}
+.imgview{width:100%;border-radius:12px;display:block}
+.toast{position:fixed;left:50%;bottom:calc(var(--sab) + 96px);transform:translateX(-50%) translateY(20px);background:var(--navy);color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:99;max-width:86vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.spin{width:18px;height:18px;border:3px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ホーム -->
+<section class="screen on" id="s-home">
+  <div class="hero">
+    <div class="logo"><i><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z"/><path d="M8 8h8M8 12h5"/></svg></i>Folio</div>
+    <h1>本を<em>撮るだけ</em>で、<br>授業に使える形に。</h1>
+    <p>専門書や教科書のページを撮影すると、AIが文字を読み取り、要約・発表原稿・レポート構成案までまとめます。</p>
+  </div>
+  <div id="homeBanner"></div>
+  <div id="draftBanner"></div>
+  <div id="installBox"></div>
+  <div class="stack">
+    <button class="btn primary" id="hCam"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>本を撮影する</button>
+    <div class="row">
+      <button class="btn soft sm" id="hLib">過去の要約を見る</button>
+      <button class="btn ghost sm" id="hNew">新しい要約を作成</button>
+    </div>
+  </div>
+  <div class="steps">
+    <div class="step"><b>1</b><div><strong>ページを撮影</strong>必要なページを順に撮影。傾きや明るさは自動で補正します。</div></div>
+    <div class="step"><b>2</b><div><strong>まとめて確認</strong>並べ替え・削除をしてから、全ページを一括で読み込みます。</div></div>
+    <div class="step"><b>3</b><div><strong>AIが整理</strong>要約・重要ポイント・用語・発表原稿・レポート構成案を、出典ページ付きで作成。</div></div>
+  </div>
+  <p class="muted" style="text-align:center">書かれていない内容はAIに補わせない設計です。<br>読み取れなかった箇所は「読み取れなかった」と表示します。</p>
+</section>
+
+<!-- 撮影 -->
+<section class="screen" id="s-camera">
+  <div class="cam-top">
+    <button class="ib" id="camBack" aria-label="戻る"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="cnt" id="camCnt">0 ページ</div>
+    <button class="ib" id="camPick" aria-label="ライブラリから追加"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg></button>
+  </div>
+  <div class="viewfinder" id="vf">
+    <video id="video" playsinline muted autoplay></video>
+    <div class="guide"></div>
+    <div class="tip">ページ全体が枠に入るように、明るい場所で撮影</div>
+    <div class="flash" id="flash"></div>
+    <div class="camfail" id="camfail">
+      <p id="camfailMsg"></p>
+      <button class="btn soft" id="camNative">端末のカメラアプリで撮影する</button>
+    </div>
+  </div>
+  <div class="cam-bottom">
+    <div class="thumb" id="camThumb"></div>
+    <button class="shutter" id="shutter" aria-label="撮影"><span></span></button>
+    <button class="doneb" id="camDone" disabled>完了</button>
+  </div>
+</section>
+
+<!-- 確認 -->
+<section class="screen" id="s-review">
+  <div class="top">
+    <button class="ib" data-go="home" aria-label="ホーム"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h2 id="revTitle">撮影したページ</h2>
+  </div>
+  <p class="muted" style="margin:0">本の順番どおりに並べてください。画像をタップすると拡大できます。</p>
+  <div class="grid" id="grid"></div>
+  <div class="row"><button class="btn soft sm" id="revAdd">＋ 撮影して追加</button><button class="btn ghost sm" id="revPick">ライブラリから追加</button></div>
+  <div class="sticky"><button class="btn primary" id="revGo">このページをまとめて要約する</button></div>
+</section>
+
+<!-- 設定 -->
+<section class="screen" id="s-settings">
+  <div class="top">
+    <button class="ib" data-go="review" aria-label="戻る"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h2>要約の設定</h2>
+  </div>
+  <div id="setBanner"></div>
+  <div class="h3">まとめ方</div>
+  <div class="chips" id="purposes"></div>
+  <div class="h3">長さ</div>
+  <div class="seg" id="lengths"></div>
+  <div class="h3">追加で作成</div>
+  <button class="tg" id="tgSpeech"><span>発表原稿（1分・3分・5分）</span><i class="sw"></i></button>
+  <button class="tg" id="tgReport"><span>レポート構成案</span><i class="sw"></i></button>
+  <div class="sticky"><button class="btn primary" id="setGo">AIに読み込ませて要約する</button></div>
+</section>
+
+<!-- 処理 -->
+<section class="screen" id="s-proc">
+  <div class="proc">
+    <div class="scanner"><i style="top:18%"></i><i style="top:30%;right:40px"></i><i style="top:42%"></i><i style="top:54%;right:30px"></i><i style="top:66%"></i><i style="top:78%;right:50px"></i><div class="l"></div></div>
+    <h2 id="procTitle" style="margin:0;color:var(--navy)">読み取っています</h2>
+    <p class="muted" id="procMsg" style="margin:6px 0 0">しばらくお待ちください</p>
+    <div class="bar"><div id="procBar"></div></div>
+    <div class="stlist">
+      <div id="st1"><span class="dot"></span>ページの文字を認識</div>
+      <div id="st2"><span class="dot"></span>全ページの内容を統合して要約</div>
+      <div id="st3"><span class="dot"></span>結果を整える</div>
+    </div>
+    <div id="procErr"></div>
+  </div>
+</section>
+
+<!-- 結果 -->
+<section class="screen" id="s-result">
+  <div class="top">
+    <button class="ib" id="resBack" aria-label="戻る"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h2>要約結果</h2>
+    <button class="ib" id="resHome" aria-label="ホーム"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9H4z"/></svg></button>
+  </div>
+  <div id="resBody"></div>
+</section>
+
+<!-- 一覧 -->
+<section class="screen" id="s-library">
+  <div class="top">
+    <button class="ib" data-go="home" aria-label="ホーム"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h2>保存した要約</h2>
+  </div>
+  <input class="search" id="q" type="search" placeholder="タイトルで検索">
+  <div id="list"></div>
+</section>
+
+<div class="mask" id="mask"><div class="sheet" id="sheet"></div></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileNative" accept="image/*" capture="environment" hidden>
+<input type="file" id="filePick" accept="image/*" multiple hidden>
+
+<script>
+'use strict';
+/* ========== 基本 ========== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MAX_PAGES = 40;
+const PURPOSES = [
+  ['lecture','授業用にまとめる','復習・理解向け'],
+  ['presentation','発表用にまとめる','話す順序を意識'],
+  ['report','レポート作成用','論点と根拠を整理'],
+  ['beginner','初心者向けに説明','やさしい言葉で'],
+  ['concise','短く簡潔に','要点のみ'],
+  ['detailed','詳しくまとめる','抜け漏れを減らす'],
+  ['points','重要ポイントだけ','核心を抽出'],
+];
+const LENGTHS = [['short','短い'],['normal','標準'],['long','詳しい']];
+
+const state = {
+  pages: [], // {id,dataUrl,blur,ocr,printed}
+  options: { purpose:'lecture', length:'normal', speech:true, report:true },
+  result: null, meta: { id:null, title:'', printed:[], ocrText:'', images:null, saved:false },
+  viewImages: null, editing: false, speechTab:'m3',
+  status: { loaded:false, aiConfigured:false, needsPasscode:false, reachable:true },
+  screen: 'home', stream: null, busy: false,
+};
+let uid = 0;
+
+function toast(msg, ms = 2200) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), ms);
+}
+function openSheet(html) { $('#sheet').innerHTML = html; $('#mask').classList.add('on'); }
+function closeSheet() { $('#mask').classList.remove('on'); }
+$('#mask').addEventListener('click', e => { if (e.target.id === 'mask') closeSheet(); });
+
+/* ========== 画面遷移 ========== */
+function go(name) {
+  if (state.screen === 'camera' && name !== 'camera') stopCamera();
+  $$('.screen').forEach(s => s.classList.toggle('on', s.id === 's-' + name));
+  state.screen = name; window.scrollTo(0, 0);
+  if (name === 'home') renderHome();
+  if (name === 'camera') startCamera();
+  if (name === 'review') renderReview();
+  if (name === 'settings') renderSettings();
+  if (name === 'result') renderResult();
+  if (name === 'library') renderLibrary();
+}
+document.addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) go(g.dataset.go); });
+
+/* ========== AI状態 / API ========== */
+async function loadStatus() {
+  try {
+    const r = await fetch('/api/status', { cache:'no-store' });
+    if (!r.ok) throw 0;
+    const j = await r.json();
+    Object.assign(state.status, j, { loaded:true, reachable:true });
+  } catch { Object.assign(state.status, { loaded:true, reachable:false, aiConfigured:false }); }
+}
+function aiBanner() {
+  const s = state.status;
+  if (!s.loaded) return '';
+  if (!s.reachable) return '<div class="banner">AIサーバーに接続できません。撮影・補正・保存済みの閲覧は使えますが、要約にはサーバーへの接続が必要です。</div>';
+  if (!s.aiConfigured) return '<div class="banner">AIのAPIキーがサーバーに設定されていないため、現在は要約を実行できません。（撮影・補正・保存の閲覧は利用できます）</div>';
+  return '';
+}
+function passcode() { return localStorage.getItem('folio_pass') || ''; }
+async function api(path, body, timeout = 150000) {
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), timeout);
+  let r;
+  try {
+    r = await fetch(path, { method:'POST', signal:ctl.signal,
+      headers:{ 'content-type':'application/json', 'x-app-passcode': passcode() }, body: JSON.stringify(body) });
+  } catch (e) {
+    throw new Error(e.name === 'AbortError' ? '応答に時間がかかりすぎました。電波の良い場所でもう一度お試しください。' : 'サーバーに接続できませんでした。通信状況を確認してください。');
+  } finally { clearTimeout(tm); }
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) {
+    if (r.status === 401) { localStorage.removeItem('folio_pass'); throw new Error('合言葉が違います。もう一度やり直してください。'); }
+    if (r.status === 429) throw new Error('アクセスが集中しています。少し待ってからもう一度お試しください。');
+    if (r.status === 413) throw new Error('画像のデータが大きすぎます。ページ数を減らして試してください。');
+    throw new Error(j.error || `エラーが発生しました (${r.status})`);
+  }
+  return j;
+}
+
+/* ========== ホーム ========== */
+let installEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvt = e; if (state.screen === 'home') renderHome(); });
+window.addEventListener('appinstalled', () => { installEvt = null; if (state.screen === 'home') renderHome(); });
+function renderInstall() {
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  if (standalone) return '';
+  if (installEvt) return '<div class="banner info" style="display:flex;align-items:center;gap:10px"><span style="flex:1">ホーム画面に追加すると、アプリとして使えます。</span><button class="btn primary sm" style="width:auto;min-height:40px" id="installBtn">インストール</button></div>';
+  if (/iphone|ipad|ipod/i.test(navigator.userAgent)) return '<div class="banner info">アプリとして使うには、Safariの共有ボタン（□↑）から「ホーム画面に追加」を選んでください。</div>';
+  return '';
+}
+function renderHome() {
+  $('#installBox').innerHTML = renderInstall();
+  const ib = $('#installBtn'); if (ib) ib.onclick = async () => { installEvt.prompt(); await installEvt.userChoice.catch(() => {}); installEvt = null; renderHome(); };
+  $('#homeBanner').innerHTML = aiBanner();
+  const n = state.pages.length;
+  $('#draftBanner').innerHTML = n ? `<div class="banner info">作成中の資料があります（${n}ページ）。<button style="font-weight:800;text-decoration:underline" data-go="review">続きから</button></div>` : '';
+}
+$('#hCam').onclick = () => go('camera');
+$('#hLib').onclick = () => go('library');
+$('#hNew').onclick = () => {
+  if (state.pages.length && !confirm('作成中の撮影画像を破棄して、新しく始めますか？')) return;
+  resetDraft(); go('camera');
+};
+function resetDraft() {
+  state.pages = []; state.result = null; state.viewImages = null; state.editing = false;
+  state.meta = { id:null, title:'', printed:[], ocrText:'', images:null, saved:false };
+}
+
+/* ========== 画像処理（端末内で完結） ========== */
+function scaleTo(src, sw, sh, max) {
+  const r = Math.min(1, max / Math.max(sw, sh));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(sw * r)); c.height = Math.max(1, Math.round(sh * r));
+  c.getContext('2d').drawImage(src, 0, 0, c.width, c.height); return c;
+}
+function gray(c) {
+  const { width:w, height:h } = c; const d = c.getContext('2d', { willReadFrequently:true }).getImageData(0, 0, w, h).data;
+  const g = new Uint8ClampedArray(w * h);
+  for (let i = 0, j = 0; i < d.length; i += 4, j++) g[j] = (d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114) | 0;
+  return { g, w, h };
+}
+function estimateSkew(small) {
+  const { g, w, h } = gray(small);
+  let sum = 0; for (const v of g) sum += v;
+  const th = (sum / g.length) * 0.78, pts = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (g[y*w + x] < th) pts.push(x - w/2, y - h/2);
+  const n = pts.length / 2; if (n < 300) return 0;
+  const step = Math.max(1, Math.floor(n / 8000)), xs = [], ys = [];
+  for (let i = 0; i < n; i += step) { xs.push(pts[2*i]); ys.push(pts[2*i+1]); }
+  const bins = h * 2 + 4; let best = 0, bestS = -1, zeroS = 0;
+  for (let a = -6; a <= 6.001; a += 0.5) {
+    const t = a * Math.PI / 180, s = Math.sin(t), c = Math.cos(t), hist = new Float32Array(bins);
+    for (let i = 0; i < xs.length; i++) { const yy = Math.round(xs[i]*s + ys[i]*c + h); if (yy >= 0 && yy < bins) hist[yy]++; }
+    let sc = 0; for (const v of hist) sc += v * v;
+    if (Math.abs(a) < 1e-6) zeroS = sc;
+    if (sc > bestS) { bestS = sc; best = a; }
+  }
+  return bestS > zeroS * 1.04 ? best : 0;
+}
+function rotateCanvas(c, deg) {
+  const t = deg * Math.PI / 180, o = document.createElement('canvas');
+  o.width = c.width; o.height = c.height;
+  const x = o.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, o.width, o.height);
+  x.translate(o.width/2, o.height/2); x.rotate(t); x.drawImage(c, -c.width/2, -c.height/2); return o;
+}
+function cropToPage(c) {
+  const s = scaleTo(c, c.width, c.height, 240), { g, w, h } = gray(s);
+  const hist = new Array(256).fill(0); for (const v of g) hist[v]++;
+  let total = g.length, sumAll = 0; for (let i = 0; i < 256; i++) sumAll += i * hist[i];
+  let sumB = 0, wB = 0, maxV = 0, th = 128;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t]; if (!wB) continue; const wF = total - wB; if (!wF) break;
+    sumB += t * hist[t]; const mB = sumB / wB, mF = (sumAll - sumB) / wF, v = wB * wF * (mB - mF) ** 2;
+    if (v > maxV) { maxV = v; th = t; }
+  }
+  const rows = new Float32Array(h), cols = new Float32Array(w);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (g[y*w + x] > th) { rows[y]++; cols[x]++; }
+  let y0 = 0, y1 = h - 1, x0 = 0, x1 = w - 1;
+  while (y0 < h && rows[y0] / w < 0.3) y0++; while (y1 > y0 && rows[y1] / w < 0.3) y1--;
+  while (x0 < w && cols[x0] / h < 0.3) x0++; while (x1 > x0 && cols[x1] / h < 0.3) x1--;
+  const ratio = ((x1 - x0 + 1) * (y1 - y0 + 1)) / (w * h);
+  if (ratio < 0.4 || ratio > 0.97) return c;
+  const m = 0.015, sx = c.width / w, sy = c.height / h;
+  const cx = Math.max(0, Math.round((x0 - w*m) * sx)), cy = Math.max(0, Math.round((y0 - h*m) * sy));
+  const cw = Math.min(c.width - cx, Math.round((x1 - x0 + 1 + 2*w*m) * sx)), ch = Math.min(c.height - cy, Math.round((y1 - y0 + 1 + 2*h*m) * sy));
+  const o = document.createElement('canvas'); o.width = cw; o.height = ch;
+  o.getContext('2d').drawImage(c, cx, cy, cw, ch, 0, 0, cw, ch); return o;
+}
+function enhance(c) {
+  const x = c.getContext('2d', { willReadFrequently:true }), im = x.getImageData(0, 0, c.width, c.height), d = im.data;
+  const hist = new Uint32Array(256);
+  for (let i = 0; i < d.length; i += 4) hist[(d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114) | 0]++;
+  const tot = d.length / 4; let acc = 0, lo = 0, hi = 255;
+  for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc >= tot * 0.02) { lo = i; break; } }
+  acc = 0; for (let i = 255; i >= 0; i--) { acc += hist[i]; if (acc >= tot * 0.25) { hi = i; break; } } // 紙の白を基準に
+  if (hi - lo < 30) return c;
+  const k = 255 / (hi - lo), lut = new Uint8ClampedArray(256);
+  for (let i = 0; i < 256; i++) lut[i] = Math.pow(Math.min(1, Math.max(0, (i - lo) * k / 255)), 1.1) * 255;
+  for (let i = 0; i < d.length; i += 4) { d[i] = lut[d[i]]; d[i+1] = lut[d[i+1]]; d[i+2] = lut[d[i+2]]; }
+  x.putImageData(im, 0, 0); return c;
+}
+function blurScore(c) {
+  const s = scaleTo(c, c.width, c.height, 640), { g, w, h } = gray(s);
+  let sum = 0, sum2 = 0, n = 0;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y*w + x, v = -4*g[i] + g[i-1] + g[i+1] + g[i-w] + g[i+w]; sum += v; sum2 += v*v; n++;
+  }
+  const m = sum / n; return sum2 / n - m * m;
+}
+function processCanvas(src, sw, sh) {
+  let c = scaleTo(src, sw, sh, 1800);
+  const ang = estimateSkew(scaleTo(c, c.width, c.height, 480));
+  if (ang) c = rotateCanvas(c, ang);
+  c = cropToPage(c); c = enhance(c);
+  return { dataUrl: c.toDataURL('image/jpeg', 0.85), blur: blurScore(c) };
+}
+async function bitmapFromFile(file) {
+  try { return await createImageBitmap(file); }
+  catch {
+    return await new Promise((res, rej) => {
+      const u = URL.createObjectURL(file), im = new Image();
+      im.onload = () => { res(im); }; im.onerror = () => rej(new Error('画像を読み込めませんでした'));
+      im.src = u;
+    });
+  }
+}
+function addProcessed(p) {
+  if (state.pages.length >= MAX_PAGES) { toast(`1回に扱えるのは最大${MAX_PAGES}ページです`); return false; }
+  state.pages.push({ id: ++uid, dataUrl: p.dataUrl, blur: p.blur, ocr: null, printed: null });
+  state.result = null; return true;
+}
+async function importFiles(files) {
+  if (!files.length) return;
+  state.busy = true; toast(`${files.length}枚を補正しています…`, 4000);
+  let ok = 0;
+  for (const f of files) {
+    try {
+      const bm = await bitmapFromFile(f);
+      const p = processCanvas(bm, bm.width || bm.naturalWidth, bm.height || bm.naturalHeight);
+      if (addProcessed(p)) ok++; else break;
+      await new Promise(r => setTimeout(r));
+    } catch (e) { toast('読み込めない画像がありました'); }
+  }
+  state.busy = false;
+  if (ok) toast(`${ok}枚を取り込みました`);
+  if (state.screen === 'camera') updateCamUI(); if (state.screen === 'review') renderReview();
+  if (ok && state.screen === 'home') go('review');
+}
+let pickMode = null;
+$('#filePick').addEventListener('change', async e => { const f = [...e.target.files]; e.target.value = ''; await importFiles(f); });
+$('#fileNative').addEventListener('change', async e => { const f = [...e.target.files]; e.target.value = ''; await importFiles(f); });
+
+/* ========== カメラ ========== */
+function updateCamUI() {
+  const n = state.pages.length;
+  $('#camCnt').textContent = `${n} ページ`;
+  $('#camDone').disabled = n === 0;
+  $('#camThumb').style.backgroundImage = n ? `url(${state.pages[n-1].dataUrl})` : '';
+}
+async function startCamera() {
+  updateCamUI(); $('#camfail').style.display = 'none'; $('#video').style.display = '';
+  $('.guide').style.display = ''; $('.tip').style.display = '';
+  if (!navigator.mediaDevices?.getUserMedia) return camFail('このブラウザ／接続ではアプリ内カメラを使えません（HTTPS接続が必要です）。端末のカメラアプリで撮影できます。');
+  try {
+    stopCamera();
+    state.stream = await navigator.mediaDevices.getUserMedia({ audio:false, video:{ facingMode:{ ideal:'environment' }, width:{ ideal:2560 }, height:{ ideal:1920 } } });
+    const v = $('#video'); v.srcObject = state.stream; await v.play().catch(() => {});
+  } catch (e) {
+    camFail(e && e.name === 'NotAllowedError' ? 'カメラの使用が許可されていません。ブラウザの設定で許可するか、端末のカメラアプリで撮影してください。' : 'カメラを起動できませんでした。端末のカメラアプリで撮影できます。');
+  }
+}
+function camFail(msg) {
+  $('#video').style.display = 'none'; $('.guide').style.display = 'none'; $('.tip').style.display = 'none';
+  $('#camfailMsg').textContent = msg; $('#camfail').style.display = 'block';
+}
+function stopCamera() { if (state.stream) { state.stream.getTracks().forEach(t => t.stop()); state.stream = null; } $('#video').srcObject = null; }
+$('#camBack').onclick = () => go(state.pages.length ? 'review' : 'home');
+$('#camPick').onclick = () => $('#filePick').click();
+$('#camNative').onclick = () => $('#fileNative').click();
+$('#camDone').onclick = () => go('review');
+$('#shutter').onclick = async () => {
+  const v = $('#video');
+  if (!state.stream || !v.videoWidth) return $('#fileNative').click();
+  if (state.busy) return;
+  state.busy = true;
+  const c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  const f = $('#flash'); f.classList.remove('go'); void f.offsetWidth; f.classList.add('go');
+  if (navigator.vibrate) navigator.vibrate(20);
+  await new Promise(r => setTimeout(r, 30));
+  const p = processCanvas(c, c.width, c.height);
+  addProcessed(p); state.busy = false; updateCamUI();
+  if (p.blur < 70) toast('ぼやけている可能性があります。必要なら撮り直してください', 3200);
+};
+
+/* ========== 確認画面 ========== */
+function renderReview() {
+  const n = state.pages.length;
+  $('#revTitle').textContent = `撮影したページ（${n}）`;
+  $('#revGo').disabled = n === 0;
+  const g = $('#grid');
+  if (!n) { g.innerHTML = '<div class="empty" style="grid-column:1/-1">まだページがありません。<br>「撮影して追加」から始めましょう。</div>'; return; }
+  g.innerHTML = state.pages.map((p, i) => `
+    <div class="pg">
+      <div class="im" data-view="${i}" style="background-image:url(${p.dataUrl})">
+        <span class="no">${i + 1}</span>
+        ${p.blur < 70 ? '<div class="bl">ぼやけている可能性。再撮影をおすすめします</div>' : ''}
+      </div>
+      <div class="tools">
+        <button data-mv="${i}:-1" ${i === 0 ? 'disabled' : ''} aria-label="前へ">‹</button>
+        <button data-rot="${i}" aria-label="回転">↻</button>
+        <button data-mv="${i}:1" ${i === n - 1 ? 'disabled' : ''} aria-label="後ろへ">›</button>
+        <button class="del" data-del="${i}" aria-label="削除">✕</button>
+      </div>
+    </div>`).join('');
+}
+$('#grid').addEventListener('click', async e => {
+  const b = e.target.closest('[data-mv],[data-rot],[data-del],[data-view]'); if (!b) return;
+  if (b.dataset.mv) {
+    const [i, d] = b.dataset.mv.split(':').map(Number), j = i + d;
+    [state.pages[i], state.pages[j]] = [state.pages[j], state.pages[i]]; state.result = null; renderReview();
+  } else if (b.dataset.del !== undefined) {
+    state.pages.splice(+b.dataset.del, 1); state.result = null; renderReview();
+  } else if (b.dataset.rot !== undefined) {
+    const p = state.pages[+b.dataset.rot]; p.dataUrl = await rotateDataUrl(p.dataUrl); p.ocr = null; renderReview();
+  } else if (b.dataset.view !== undefined) {
+    openSheet(`<h3>${+b.dataset.view + 1}ページ目</h3><img class="imgview" src="${state.pages[+b.dataset.view].dataUrl}" alt=""><button class="btn soft" style="margin-top:14px" onclick="closeSheet()">閉じる</button>`);
+  }
+});
+function rotateDataUrl(url) {
+  return new Promise(res => {
+    const im = new Image(); im.onload = () => {
+      const c = document.createElement('canvas'); c.width = im.height; c.height = im.width;
+      const x = c.getContext('2d'); x.translate(c.width/2, c.height/2); x.rotate(Math.PI/2); x.drawImage(im, -im.width/2, -im.height/2);
+      res(c.toDataURL('image/jpeg', 0.85));
+    }; im.src = url;
+  });
+}
+$('#revAdd').onclick = () => go('camera');
+$('#revPick').onclick = () => $('#filePick').click();
+$('#revGo').onclick = () => { if (state.pages.length) go('settings'); };
+
+/* ========== 設定画面 ========== */
+function renderSettings() {
+  const o = state.options;
+  $('#purposes').innerHTML = PURPOSES.map(([k, t, s]) => `<button class="chip ${o.purpose === k ? 'on' : ''}" data-p="${k}">${t}<small>${s}</small></button>`).join('');
+  $('#lengths').innerHTML = LENGTHS.map(([k, t]) => `<button class="${o.length === k ? 'on' : ''}" data-l="${k}">${t}</button>`).join('');
+  $('#tgSpeech .sw').classList.toggle('on', o.speech);
+  $('#tgReport .sw').classList.toggle('on', o.report);
+  $('#setBanner').innerHTML = aiBanner();
+  $('#setGo').disabled = !(state.status.reachable && state.status.aiConfigured);
+  $('#setGo').textContent = `${state.pages.length}ページをAIに読み込ませて要約する`;
+}
+$('#purposes').onclick = e => { const b = e.target.closest('[data-p]'); if (b) { state.options.purpose = b.dataset.p; renderSettings(); } };
+$('#lengths').onclick = e => { const b = e.target.closest('[data-l]'); if (b) { state.options.length = b.dataset.l; renderSettings(); } };
+$('#tgSpeech').onclick = () => { state.options.speech = !state.options.speech; renderSettings(); };
+$('#tgReport').onclick = () => { state.options.report = !state.options.report; renderSettings(); };
+$('#setGo').onclick = () => {
+  if (state.status.needsPasscode && !passcode()) {
+    openSheet(`<h3>合言葉を入力</h3><p class="muted">このアプリの管理者が設定した合言葉です。</p><input type="text" id="pcIn" autocomplete="off"><button class="btn primary" style="margin-top:14px" id="pcOk">決定</button>`);
+    $('#pcOk').onclick = () => { const v = $('#pcIn').value.trim(); if (!v) return; localStorage.setItem('folio_pass', v); closeSheet(); runPipeline(); };
+    return;
+  }
+  runPipeline();
+};
+
+/* ========== AI処理 ========== */
+function setProc(stage, pct, msg, title) {
+  ['st1','st2','st3'].forEach((id, i) => { const el = $('#' + id); el.className = i + 1 < stage ? 'done' : (i + 1 === stage ? 'on' : ''); });
+  $('#procBar').style.width = pct + '%'; if (msg) $('#procMsg').textContent = msg; if (title) $('#procTitle').textContent = title;
+}
+function showProcError(msg) {
+  $('#procTitle').textContent = '処理を完了できませんでした'; $('.scanner').style.display = 'none';
+  $('#procErr').innerHTML = `<div class="errbox"><b>うまくいきませんでした</b>${esc(msg)}<br><span style="color:#a05a52">読み取り済みのページは保持されています。再試行すると続きから処理します。</span></div>
+    <div class="stack" style="margin-top:16px"><button class="btn primary" id="errRetry">もう一度試す</button><button class="btn ghost" id="errBack">設定に戻る</button></div>`;
+  $('#errRetry').onclick = runPipeline; $('#errBack').onclick = () => go('settings');
+}
+function parseOcr(batchPages, text) {
+  // 「=== 画像 K ===」で分割。見つからなければ先頭ページに全文
+  const parts = text.split(/^=== *画像 *(\d+) *===\s*$/m);
+  const map = {};
+  for (let i = 1; i < parts.length; i += 2) map[+parts[i]] = (parts[i + 1] || '').trim();
+  return batchPages.map(({ page, idx }, k) => {
+    let t = map[idx]; if (t === undefined) t = k === 0 && !Object.keys(map).length ? text.trim() : '[判読不能: このページの文字を取得できませんでした]';
+    const m = /\[印刷ページ番号:\s*([^\]]+)\]/.exec(t);
+    return { page, text: t.replace(/\[印刷ページ番号:[^\]]*\]\s*/, '').trim(), printed: m ? m[1].trim() : null };
+  });
+}
+async function runPipeline() {
+  go('proc'); $('#procErr').innerHTML = ''; $('.scanner').style.display = '';
+  const pages = state.pages.slice(), total = pages.length;
+  try {
+    setProc(1, 3, `0 / ${total} ページを読み取り中`, '読み取っています');
+    const todo = pages.map((p, i) => ({ page:p, idx:i + 1 })).filter(x => x.page.ocr === null);
+    let done = total - todo.length;
+    for (let i = 0; i < todo.length; i += 3) {
+      const batch = todo.slice(i, i + 3);
+      const j = await api('/api/ocr', { images: batch.map(b => ({ index:b.idx, dataUrl:b.page.dataUrl })) });
+      for (const r of parseOcr(batch, j.text || '')) { r.page.ocr = r.text; r.page.printed = r.printed; }
+      done += batch.length;
+      setProc(1, 3 + Math.round(done / total * 55), `${done} / ${total} ページを読み取り済み`);
+    }
+    const full = pages.map((p, i) => `=== 画像 ${i + 1} ===\n${p.ocr}`).join('\n\n');
+    const opts = { ...state.options };
+    setProc(2, 62, '全ページの内容を統合しています', '内容を整理しています');
+    let result;
+    if (full.length <= 22000) {
+      result = (await api('/api/summarize', { stage:'final', text:full, options:opts })).result;
+    } else {
+      // 内容を分割して部分メモを作り、最後に統合
+      const chunks = []; let cur = '';
+      pages.forEach((p, i) => {
+        const seg = `=== 画像 ${i + 1} ===\n${p.ocr}\n\n`;
+        if (cur && (cur + seg).length > 12000) { chunks.push(cur); cur = ''; } cur += seg;
+      });
+      if (cur) chunks.push(cur);
+      const partials = [];
+      for (let i = 0; i < chunks.length; i++) {
+        setProc(2, 62 + Math.round(i / chunks.length * 26), `分割して処理中 (${i + 1} / ${chunks.length})`);
+        partials.push((await api('/api/summarize', { stage:'chunk', text:chunks[i] })).result);
+      }
+      setProc(2, 90, '部分メモを統合しています');
+      result = (await api('/api/summarize', { stage:'final', partials, options:opts })).result;
+    }
+    setProc(3, 97, '結果を整えています');
+    state.result = normalize(result);
+    state.meta = { id:null, title: state.result.title || '無題の資料', printed: pages.map(p => p.printed), ocrText: full, images:null, saved:false };
+    state.viewImages = pages.map(p => p.dataUrl); state.editing = false;
+    setProc(4, 100);
+    setTimeout(() => go('result'), 350);
+  } catch (e) { showProcError(e.message || '不明なエラーが発生しました。'); }
+}
+function normalize(r) {
+  r = r || {}; const A = x => Array.isArray(x) ? x : [];
+  return {
+    title: String(r.title || ''), overall: String(r.overall || ''),
+    chapters: A(r.chapters).map(c => ({ heading:String(c.heading || ''), summary:String(c.summary || ''), pages:A(c.pages) })),
+    points: A(r.points).map(p => typeof p === 'string' ? { text:p, pages:[] } : { text:String(p.text || ''), pages:A(p.pages) }),
+    terms: A(r.terms).map(t => ({ term:String(t.term || ''), meaning:String(t.meaning || ''), pages:A(t.pages) })),
+    explanation: String(r.explanation || ''), presentation: String(r.presentation || ''),
+    speech: r.speech && typeof r.speech === 'object' ? { m1:String(r.speech.m1 || ''), m3:String(r.speech.m3 || ''), m5:String(r.speech.m5 || '') } : null,
+    report: r.report && typeof r.report === 'object' ? { theme:String(r.report.theme || ''), issues:A(r.report.issues).map(String), outline:A(r.report.outline).map(o => ({ section:String(o.section || ''), content:String(o.content || '') })) } : null,
+    unreadable: String(r.unreadable || ''),
+  };
+}
+
+/* ========== 結果画面 ========== */
+function F(path, val, rows = 4) {
+  if (!state.editing) return `<div class="txt">${esc(val)}</div>`;
+  return `<textarea class="ed" data-path="${path}" rows="${rows}">${esc(val)}</textarea>`;
+}
+function cites(pages) {
+  if (!pages || !pages.length) return '';
+  const pr = state.meta.printed || [];
+  return `<div class="cites">${pages.map(n => `<button class="cite" data-cite="${n}">${'画像' + n}${pr[n - 1] ? ` (p.${esc(pr[n - 1])})` : ''}</button>`).join('')}</div>`;
+}
+function sec(num, title, body, open) {
+  return `<details class="sec" ${open ? 'open' : ''}><summary><span class="n">${num}</span>${title}</summary><div class="bd">${body}</div></details>`;
+}
+function renderResult() {
+  const r = state.result, el = $('#resBody');
+  if (!r) { el.innerHTML = '<div class="empty">表示する要約がありません。</div>'; return; }
+  const ed = state.editing;
+  let h = `<input class="titlein" id="resTitle" value="${esc(state.meta.title)}" placeholder="タイトル" ${ed ? '' : ''}>
+  <div class="muted">${state.meta.saved ? '保存済み' : '未保存'} ・ ${state.viewImages ? state.viewImages.length + 'ページ分' : ''}</div>
+  <div class="acts">
+    ${ed ? '<button class="pr" id="aEditDone">編集を完了</button>' : '<button class="pr" id="aSave">保存</button><button id="aCopy">コピー</button><button id="aDl">テキスト保存</button><button id="aEdit">編集</button>'}
+  </div>`;
+  if (r.unreadable) h += `<div class="warnbox"><b>読み取れなかった箇所</b><br>${esc(r.unreadable)}</div>`;
+  h += sec('①', '全体の要約', F('overall', r.overall, 6), true);
+  h += sec('②', '章ごとの要約', r.chapters.length ? r.chapters.map((c, i) => `<div class="item">${ed ? `<input class="ed" data-path="chapters.${i}.heading" value="${esc(c.heading)}" style="margin-bottom:6px">` : `<h4>${esc(c.heading)}</h4>`}${F(`chapters.${i}.summary`, c.summary, 4)}${cites(c.pages)}</div>`).join('') : '<span class="muted">章・見出しを特定できませんでした。</span>', true);
+  h += sec('③', '重要ポイント', r.points.map((p, i) => `<div class="item">${F(`points.${i}.text`, p.text, 2)}${cites(p.pages)}</div>`).join('') || '<span class="muted">なし</span>', true);
+  h += sec('④', 'キーワード・専門用語', r.terms.map((t, i) => `<div class="item">${ed ? `<input class="ed" data-path="terms.${i}.term" value="${esc(t.term)}" style="margin-bottom:6px">` : `<h4>${esc(t.term)}</h4>`}${F(`terms.${i}.meaning`, t.meaning, 2)}${cites(t.pages)}</div>`).join('') || '<span class="muted">なし</span>', false);
+  h += sec('⑤', '詳しい解説', F('explanation', r.explanation, 8), false);
+  h += sec('⑥', '発表用まとめ', F('presentation', r.presentation, 8), false);
+  if (r.speech) {
+    const t = state.speechTab, labels = { m1:'1分', m3:'3分', m5:'5分' };
+    h += sec('⑦', '発表原稿', `<div class="tabs">${Object.keys(labels).map(k => `<button data-sp="${k}" class="${t === k ? 'on' : ''}">${labels[k]}</button>`).join('')}</div>${F('speech.' + t, r.speech[t], 10)}<button class="btn soft sm" style="margin-top:10px" data-copytxt="speech">この原稿をコピー</button>`, false);
+  }
+  if (r.report) {
+    h += sec('⑧', 'レポート構成案', `<div class="item"><h4>テーマ</h4>${F('report.theme', r.report.theme, 2)}</div>
+      <div class="item"><h4>論点</h4>${r.report.issues.map((x, i) => F(`report.issues.${i}`, '・' + x.replace(/^・/, ''), 2)).join('')}</div>
+      <div class="item"><h4>構成</h4>${r.report.outline.map((o, i) => `<div style="margin-bottom:10px">${ed ? `<input class="ed" data-path="report.outline.${i}.section" value="${esc(o.section)}" style="margin-bottom:6px">` : `<b>${esc(o.section)}</b>`}${F(`report.outline.${i}.content`, o.content, 2)}</div>`).join('')}</div>`, false);
+  }
+  h += sec('📄', '読み取りテキスト（AIが認識した原文）', `<p class="muted" style="margin-top:0">要約の根拠となった認識結果です。誤認識がないか確認できます。</p><pre class="raw">${esc(state.meta.ocrText || '（保存されていません）')}</pre>`, false);
+  h += `<div class="stack" style="margin-top:20px"><button class="btn ghost" id="aNew">新しい要約を作成</button></div>`;
+  el.innerHTML = h;
+  $('#resTitle').oninput = e => { state.meta.title = e.target.value; };
+}
+function collectEdits() {
+  $$('#resBody [data-path]').forEach(el => {
+    const keys = el.dataset.path.split('.'); let o = state.result;
+    for (let i = 0; i < keys.length - 1; i++) o = o[keys[i]];
+    let v = el.value; const last = keys[keys.length - 1];
+    if (keys[0] === 'report' && keys[1] === 'issues') v = v.replace(/^・\s*/, '');
+    o[last] = v;
+  });
+}
+$('#resBody').addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.id === 'aSave') return openSaveSheet();
+  if (t.id === 'aCopy') return copyText(toText());
+  if (t.id === 'aDl') return download();
+  if (t.id === 'aEdit') { state.editing = true; return renderResult(); }
+  if (t.id === 'aEditDone') { collectEdits(); state.editing = false; if (state.meta.saved) await persist(); renderResult(); return toast('編集を反映しました'); }
+  if (t.id === 'aNew') { if (confirm('この画面を閉じて新しく始めますか？（保存していない内容は失われます）')) { resetDraft(); go('camera'); } return; }
+  if (t.dataset.sp) { if (state.editing) collectEdits(); state.speechTab = t.dataset.sp; return renderResult(); }
+  if (t.dataset.copytxt) return copyText(state.result.speech[state.speechTab]);
+  if (t.dataset.cite) {
+    const n = +t.dataset.cite, im = state.viewImages && state.viewImages[n - 1];
+    if (!im) return toast('このページの画像は保存されていません');
+    openSheet(`<h3>出典：画像${n}${state.meta.printed?.[n - 1] ? '（本のp.' + esc(state.meta.printed[n - 1]) + '）' : ''}</h3><img class="imgview" src="${im}" alt=""><button class="btn soft" style="margin-top:14px" onclick="closeSheet()">閉じる</button>`);
+  }
+});
+$('#resBack').onclick = () => go(state.meta.saved && !state.pages.length ? 'library' : (state.pages.length ? 'review' : 'home'));
+$('#resHome').onclick = () => go('home');
+
+function toText() {
+  const r = state.result, L = [];
+  const pg = a => a && a.length ? `（出典: ${a.map(n => '画像' + n + (state.meta.printed?.[n - 1] ? ' p.' + state.meta.printed[n - 1] : '')).join('、')}）` : '';
+  L.push(`# ${state.meta.title}`, '');
+  if (r.unreadable) L.push('【読み取れなかった箇所】', r.unreadable, '');
+  L.push('■ 全体の要約', r.overall, '', '■ 章ごとの要約');
+  r.chapters.forEach(c => L.push(`● ${c.heading}`, c.summary + pg(c.pages), ''));
+  L.push('■ 重要ポイント'); r.points.forEach((p, i) => L.push(`${i + 1}. ${p.text}${pg(p.pages)}`));
+  L.push('', '■ キーワード・専門用語'); r.terms.forEach(t => L.push(`・${t.term}: ${t.meaning}${pg(t.pages)}`));
+  L.push('', '■ 詳しい解説', r.explanation, '', '■ 発表用まとめ', r.presentation, '');
+  if (r.speech) L.push('■ 発表原稿（1分）', r.speech.m1, '', '■ 発表原稿（3分）', r.speech.m3, '', '■ 発表原稿（5分）', r.speech.m5, '');
+  if (r.report) { L.push('■ レポート構成案', `テーマ: ${r.report.theme}`, '論点:'); r.report.issues.forEach(x => L.push(`・${x}`)); L.push('構成:'); r.report.outline.forEach(o => L.push(`${o.section}: ${o.content}`)); }
+  return L.join('\n');
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); toast('コピーしました'); }
+  catch {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); toast('コピーしました'); } catch { toast('コピーできませんでした'); } ta.remove();
+  }
+}
+function download() {
+  const blob = new Blob([toText()], { type:'text/plain;charset=utf-8' }), a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = (state.meta.title || 'summary').replace(/[\\/:*?"<>|]/g, '_') + '.txt';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+/* ========== 保存（IndexedDB） ========== */
+const DB = {
+  open() { return new Promise((res, rej) => { const q = indexedDB.open('folio', 1); q.onupgradeneeded = () => q.result.createObjectStore('items', { keyPath:'id' }); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); },
+  async tx(mode, fn) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction('items', mode), s = t.objectStore('items'), r = fn(s); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); }); },
+  all() { return this.tx('readonly', s => s.getAll()); }, get(id) { return this.tx('readonly', s => s.get(id)); },
+  put(v) { return this.tx('readwrite', s => s.put(v)); }, del(id) { return this.tx('readwrite', s => s.delete(id)); },
+};
+function openSaveSheet() {
+  openSheet(`<h3>要約を保存</h3><input type="text" id="svTitle" value="${esc(state.meta.title)}" placeholder="タイトル">
+    <label class="chk"><input type="checkbox" id="svImg" ${state.meta.images ? 'checked' : ''}>撮影した画像も一緒に保存する</label>
+    <p class="muted" style="margin:0 0 14px">画像を保存すると、後から出典ページの画像を確認できます（端末内に保存されます）。</p>
+    <button class="btn primary" id="svOk">保存する</button>`);
+  $('#svOk').onclick = async () => {
+    state.meta.title = $('#svTitle').value.trim() || '無題の資料';
+    state.meta.images = $('#svImg').checked ? (state.viewImages || null) : null;
+    try { await persist(); closeSheet(); renderResult(); toast('保存しました'); }
+    catch { toast('保存に失敗しました。端末の空き容量をご確認ください', 3500); }
+  };
+}
+async function persist() {
+  if (state.editing) collectEdits();
+  if (!state.meta.id) state.meta.id = 'r' + Date.now().toString(36);
+  const old = state.meta.createdAt || Date.now(); state.meta.createdAt = old;
+  await DB.put({ id:state.meta.id, title:state.meta.title, createdAt:old, updatedAt:Date.now(), result:state.result, printed:state.meta.printed, ocrText:state.meta.ocrText, images:state.meta.images, options:state.options });
+  state.meta.saved = true;
+}
+
+/* ========== 一覧 ========== */
+async function renderLibrary() {
+  const box = $('#list'); box.innerHTML = '<div class="empty">読み込み中…</div>';
+  let items = [];
+  try { items = await DB.all(); } catch { box.innerHTML = '<div class="empty">保存データを読み込めませんでした。</div>'; return; }
+  items.sort((a, b) => b.updatedAt - a.updatedAt);
+  const q = $('#q').value.trim().toLowerCase();
+  if (q) items = items.filter(i => i.title.toLowerCase().includes(q));
+  if (!items.length) { box.innerHTML = `<div class="empty">${q ? '該当する要約がありません。' : 'まだ保存した要約がありません。'}</div>`; return; }
+  box.innerHTML = items.map(i => `<div class="li"><button class="main" data-open="${i.id}"><b>${esc(i.title)}</b><span>${new Date(i.updatedAt).toLocaleString('ja-JP', { dateStyle:'medium', timeStyle:'short' })}${i.images ? ' ・ 画像あり' : ''}</span><p>${esc((i.result.overall || '').slice(0, 90))}</p></button><button class="x" data-rm="${i.id}" aria-label="削除">✕</button></div>`).join('');
+}
+$('#q').addEventListener('input', renderLibrary);
+$('#list').addEventListener('click', async e => {
+  const o = e.target.closest('[data-open]'), d = e.target.closest('[data-rm]');
+  if (o) {
+    const it = await DB.get(o.dataset.open); if (!it) return;
+    state.result = normalize(it.result); state.viewImages = it.images || null; state.editing = false;
+    state.meta = { id:it.id, title:it.title, printed:it.printed || [], ocrText:it.ocrText || '', images:it.images || null, saved:true, createdAt:it.createdAt };
+    state.pages = []; go('result');
+  }
+  if (d && confirm('この要約を削除しますか？')) { await DB.del(d.dataset.rm); renderLibrary(); toast('削除しました'); }
+});
+
+/* ========== 起動 ========== */
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+loadStatus().then(() => { if (state.screen === 'home') renderHome(); if (state.screen === 'settings') renderSettings(); });
+renderHome();
+</script>
+</body>
+</html>
